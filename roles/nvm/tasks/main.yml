@@ -1,0 +1,20 @@
+---
+- name: Existing install
+  stat:
+    path: "{{ ansible_user_dir }}/.nvm"
+  register: install
+
+- name: Fetch nvm latest version
+  shell:
+    warn: false
+    cmd: |
+      curl -s "https://api.github.com/repos/nvm-sh/nvm/releases/latest" | grep '"tag_name":' | sed -E 's/.*"v*([^"]+)".*/\1/'
+  register: latest_version
+  when: not install.stat.exists
+
+- name: Install
+  shell:
+    cmd: |
+      curl -o- "https://raw.githubusercontent.com/nvm-sh/nvm/v{{ latest_version.stdout }}/install.sh" | bash
+    warn: false
+  when: not latest_version is skipped
