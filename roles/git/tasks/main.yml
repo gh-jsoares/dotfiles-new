@@ -43,12 +43,6 @@
     scope: global
     value: true
 
-- name: Set push.gpgSign
-  community.general.git_config:
-    name: push.gpgSign
-    scope: global
-    value: true
-
 - name: Set tag.gpgSign
   community.general.git_config:
     name: tag.gpgSign
