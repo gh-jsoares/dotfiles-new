@@ -18,3 +18,4 @@ default_roles:
   - zsh
 exclude_roles:
   - awesome
+  - docker
