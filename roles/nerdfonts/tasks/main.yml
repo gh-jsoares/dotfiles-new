@@ -1,0 +1,30 @@
+---
+- set_fact:
+    fonts:
+      - JetBrainsMono
+      - Inconsolata
+
+- name: Ensure fonts directory
+  file:
+    path: "{{ ansible_user_dir }}/.fonts"
+    state: directory
+
+- name: Fetch latest nerdfonts version
+  shell:
+    warn: false
+    cmd: |
+      curl -s "https://api.github.com/repos/ryanoasis/nerd-fonts/releases/latest" | grep '"tag_name":' | sed -E 's/.*"v*([^"]+)".*/\1/'
+  register: latest_version
+
+- name: Install fonts
+  include_tasks: install.yml
+  with_items: "{{ fonts }}"
+  loop_control:
+    loop_var: font
+
+- name: Refresh font cache
+  shell:
+    cmd: |
+      fc-cache -fv
+  become: yes
+  become_user: root

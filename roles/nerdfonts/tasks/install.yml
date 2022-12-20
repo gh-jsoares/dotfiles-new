@@ -1,0 +1,31 @@
+---
+- name: "Check if font {{ font }} exists"
+  stat:
+    path: "{{ ansible_user_dir }}/.fonts/{{ font }}"
+  register: font_dir
+
+- name: "{{ font }} folder"
+  ansible.builtin.file:
+    mode: 0755
+    path: "{{ ansible_user_dir }}/.fonts/{{ font }}"
+    state: directory
+
+- name: "Download font {{ font }}"
+  ansible.builtin.unarchive:
+    src: "https://github.com/ryanoasis/nerd-fonts/releases/download/v{{ latest_version.stdout }}/{{ font }}.zip"
+    dest: "{{ ansible_user_dir }}/.fonts/{{ font }}"
+    remote_src: yes
+  when: not font_dir.stat.exists
+
+- name: "Find files to remove for {{ font }}"
+  find:
+    paths: "{{ ansible_user_dir }}/.fonts/{{ font }}"
+    patterns: "^.*[^.ttf]$,^.*Windows.*$"
+    use_regex: yes
+  register: files_to_delete
+    #when: not font_dir.stat.exists
+- name: "Clean up font files for {{ font }}"
+  file:
+    path: "{{ item.path }}"
+    state: absent
+  with_items: "{{ files_to_delete.files }}"
