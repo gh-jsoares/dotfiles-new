@@ -1,0 +1,35 @@
+---
+- name: Fetch lazygit latest version
+  shell:
+    warn: false
+    cmd: |
+      curl -s "https://api.github.com/repos/jesseduffield/lazygit/releases/latest" | grep '"tag_name":' | sed -E 's/.*"v*([^"]+)".*/\1/'
+  register: latest_version
+
+- name: Get local lazygit version
+  shell:
+    cmd: |
+      lazygit --version | sed -E 's/.*version=([0-9.]+),.*/\1/'
+  ignore_errors: true
+  register: current_version
+
+- name: Download
+  get_url:
+    dest: /tmp/lazygit.tar.gz
+    mode: 0755
+    url: "https://github.com/jesseduffield/lazygit/releases/latest/download/lazygit_{{ latest_version.stdout }}_Linux_x86_64.tar.gz"
+  when: current_version is failed or current_version.stdout is version(latest_version.stdout, '<')
+  register: download
+
+- name: Install
+  ansible.builtin.unarchive:
+    dest: /usr/local/bin
+    src: /tmp/lazygit.tar.gz
+  become: yes
+  become_user: root
+  when: download.changed
+
+- name: Remove downloaded files
+  file:
+    path: /tmp/lazygit.tar.gz
+    state: absent
