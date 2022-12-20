@@ -1,0 +1,16 @@
+default_roles:
+  - system
+  - awesome
+  - bat
+  - docker
+  - git
+  - lazygit
+  - neovim
+  - nodejs
+  - oh-my-zsh
+  - ripgrep
+  - ssh
+  - tmux
+  - zsh
+exclude_roles:
+  - awesome
