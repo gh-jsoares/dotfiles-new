@@ -23,17 +23,18 @@ ansible localhost -m ansible.builtin.debug -a var="MY_SECRET_VARIABLE" -e @value
 
 # Ansible Roles
 
-## Alacritty
-To install **alacritty**, we need to first install rust.
+## Rust dependencies
+To install some packages, we need to first install rust.
 Luckily, ansible allows us to define role dependencies so that they are executed first.
 Unfortunately, ansible cannot source the changes from the `.bashrc` file, which means it has to be sourced manually and the `bin/dotfiles` script needs to be run again after sourcing the environment changes.
 
 ```bash
-# attempt to install alacritty, will isntall rust and fail first time
-./bin/dotfiles --tags alacritty
+# install rust firts
+./bin/dotfiles --tags rust
 
-# when fails, source .bashrc manually
+# source .bashrc manually
 source ~/.bashrc
-# this time it won't fail since the rust binaries can now be found in the path
-./bin/dotfiles --tags alacritty
+
+# install desired package dependant on rust
+./bin/dotfiles --tags PACKAGE
 ```
