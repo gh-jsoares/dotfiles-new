@@ -4,6 +4,7 @@ git_user_name: João Soares
 exclude_roles:
   - awesome
 neovim_version: master
+alacritty_version: v0.11.0
 ssh_key: !vault |
   $ANSIBLE_VAULT;1.1;AES256
   33613939646438646336663834393763326435373435623566386532366434363838366633353363

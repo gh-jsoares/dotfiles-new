@@ -2,65 +2,114 @@
 - name: Dependencies
   ansible.builtin.package:
     name:
-      - ninja-build
-      - gettext
-      - libtool
-      - libtool-bin
-      - autoconf
-      - automake
       - cmake
-      - g++
       - pkg-config
-      - unzip
-      - curl
-      - doxygen
+      - libfreetype6-dev
+      - libfontconfig1-dev
+      - libxcb-xfixes0-dev
+      - libxkbcommon-dev
+      - python3
+      - gzip
     state: latest
   become: yes
+
+# use correct rust compiler
+- name: Set Rust compiler
+  shell: |
+    rustup override set stable
+    rustup update stable
 
 - name: Clone
   ansible.builtin.git:
     clone: yes
     depth: 1
-    dest: "{{ ansible_user_dir }}/Development/repository/github.com/neovim/neovim"
+    dest: "{{ ansible_user_dir }}/Development/repository/github.com/alacritty/alacritty"
     force: yes
-    repo: https://github.com/neovim/neovim.git
+    repo: https://github.com/alacritty/alacritty.git
     # single_branch: yes
     update: yes
-    version: "{{ neovim_version | default('master') }}"
+    version: "{{ alacritty_version | default('v0.11.0') }}"
   register: clone
 
 - name: Build
-  make:
-    chdir: "{{ ansible_user_dir }}/Development/repository/github.com/neovim/neovim"
-    params:
-      CMAKE_BUILD_TYPE: RelWithDebInfo
+  shell:
+    chdir: "{{ ansible_user_dir }}/Development/repository/github.com/alacritty/alacritty"
+    cmd: |
+      cargo build --release
   when: clone.changed
 
-- name: Install
-  make:
-    chdir: "{{ ansible_user_dir }}/Development/repository/github.com/neovim/neovim"
-    target: install
+- name: Check if terminfo is installed
+  shell: |
+    infocmp alacritty
+  register: terminfo
+  ignore_errors: true
+
+- name: Install terminfo
+  shell:
+    chdir: "{{ ansible_user_dir }}/Development/repository/github.com/alacritty/alacritty"
+    cmd: |
+      tic -xe alacritty,alacritty-direct extra/alacritty.info
   become: yes
+  become_user: root
+  when: terminfo is failed
+
+- name: Copy binary file
+  ansible.builtin.copy:
+    mode: 0755
+    dest: "/usr/local/bin/alacritty"
+    src: "{{ ansible_user_dir }}/Development/repository/github.com/alacritty/alacritty/target/release/alacritty"
+  become: yes
+  become_user: root
+    #when: clone.changed
+
+- name: Copy icon file
+  ansible.builtin.copy:
+    dest: "/usr/share/pixmaps/Alacritty.svg"
+    src: "{{ ansible_user_dir }}/Development/repository/github.com/alacritty/alacritty/extra/logo/alacritty-term.svg"
+  become: yes
+  become_user: root
+    #when: clone.changed
+
+- name: Install desktop entry
+  shell:
+    chdir: "{{ ansible_user_dir }}/Development/repository/github.com/alacritty/alacritty"
+    cmd: |
+      desktop-file-install extra/linux/Alacritty.desktop
+  become: yes
+  become_user: root
+  when: clone.changed
+
+- name: Update desktop database
+  shell: |
+    update-desktop-database
+  become: yes
+  become_user: root
+  when: clone.changed
+
+- name: Install manual page
+  shell:
+    chdir: "{{ ansible_user_dir }}/Development/repository/github.com/alacritty/alacritty"
+    cmd: |
+      mkdir -p /usr/local/share/man/man1
+      gzip -c extra/alacritty.man | sudo tee /usr/local/share/man/man1/alacritty.1.gz > /dev/null
+      gzip -c extra/alacritty-msg.man | sudo tee /usr/local/share/man/man1/alacritty-msg.1.gz > /dev/null
+  become: yes
+  become_user: root
   when: clone.changed
 
 - name: Remove build directory
   ansible.builtin.file:
-    path: "{{ ansible_user_dir }}/Development/repository/github.com/neovim/neovim"
+    path: "{{ ansible_user_dir }}/Development/repository/github.com/alacritty/alacritty/target"
     state: absent
   become: yes
 
 - name: Config folder
   ansible.builtin.file:
     mode: 0755
-    path: "{{ ansible_user_dir }}/.config/nvim"
+    path: "{{ ansible_user_dir }}/.config/alacritty"
     state: directory
 
-- name: Copy init.lua
+- name: Copy config file
   ansible.builtin.copy:
-    dest: "{{ ansible_user_dir }}/.config/nvim/init.lua"
-    src: "init.lua"
-
-- name: Copy modules
-  ansible.builtin.copy:
-    dest: "{{ ansible_user_dir }}/.config/nvim/lua"
-    src: "lua/"
+    dest: "{{ ansible_user_dir }}/.config/alacritty/alacritty.yml"
+    src: "alacritty.yml"

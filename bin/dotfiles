@@ -37,7 +37,9 @@ fi
 
 # run the ansible playbook and all its roles
 if [[ -f "$DOTFILES_DIR/vault.password" ]]; then
-	ansible-playbook --diff --extra-vars "@$DOTFILES_DIR/values.yml" --vault-password-file "$DOTFILES_DIR/vault.password" "$DOTFILES_DIR/main.yml" --become -e "ansible_python_interpreter=/usr/bin/python3" "$@"
+	ansible-playbook --diff --extra-vars "@$DOTFILES_DIR/values.yml" --vault-password-file "$DOTFILES_DIR/vault.password" "$DOTFILES_DIR/main.yml" -e "ansible_python_interpreter=/usr/bin/python3" "$@"
+	#ansible-playbook --diff --extra-vars "@$DOTFILES_DIR/values.yml" --vault-password-file "$DOTFILES_DIR/vault.password" "$DOTFILES_DIR/main.yml" --become --ask-become-pass -e "ansible_python_interpreter=/usr/bin/python3" "$@"
 else
-	ansible-playbook --diff --extra-vars "@$DOTFILES_DIR/values.yml" "$DOTFILES_DIR/main.yml" --become -e "ansible_python_interpreter=/usr/bin/python3" "$@"
+	#ansible-playbook --diff --extra-vars "@$DOTFILES_DIR/values.yml" "$DOTFILES_DIR/main.yml" --become --ask-become-pass -e "ansible_python_interpreter=/usr/bin/python3" "$@"
+	ansible-playbook --diff --extra-vars "@$DOTFILES_DIR/values.yml" "$DOTFILES_DIR/main.yml" -e "ansible_python_interpreter=/usr/bin/python3" "$@"
 fi

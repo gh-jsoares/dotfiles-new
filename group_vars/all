@@ -1,6 +1,8 @@
 default_roles:
   - system
+  - rust
   - awesome
+  - alacritty
   - bat
   - docker
   - git
