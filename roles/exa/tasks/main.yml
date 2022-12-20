@@ -1,4 +1,11 @@
 ---
+- name: Dependencies
+  ansible.builtin.package:
+    name:
+      - pandoc
+    state: latest 
+  become: yes
+
 # use correct rust compiler
 - name: Set Rust compiler
   shell: |
@@ -31,6 +38,26 @@
     src: "{{ ansible_user_dir }}/Development/repository/github.com/ogham/exa/target/release/exa"
   become: yes
   become_user: root
+
+- name: Build manual pages
+  shell:
+    chdir: "{{ ansible_user_dir }}/Development/repository/github.com/ogham/exa"
+    cmd: |
+      mkdir -p target/man
+      pandoc --standalone -f markdown -t man man/exa.1.md > target/man/exa.1
+      pandoc --standalone -f markdown -t man man/exa_colors.5.md > target/man/exa_colors.5
+  when: clone.changed
+
+- name: Install manual pages
+  shell:
+    chdir: "{{ ansible_user_dir }}/Development/repository/github.com/ogham/exa"
+    cmd: |
+      mkdir -p /usr/local/share/man/man1
+      gzip -c target/man/exa.1 | sudo tee /usr/local/share/man/man1/exa.1.gz > /dev/null
+      gzip -c target/man/exa_colors.5 | sudo tee /usr/local/share/man/man1/exa_colors.5.gz > /dev/null
+  become: yes
+  become_user: root
+  when: clone.changed
 
 - name: Remove build directory
   ansible.builtin.file:
