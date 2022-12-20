@@ -5,6 +5,16 @@ set -e
 
 # some constants
 DOTFILES_DIR="$HOME/.dotfiles"
+SSH_DIR="$HOME/.ssh"
+
+# generate ssh keys
+if ! [[ -d "$SSH_DIR/authorized_keys" ]]; then
+	mkdir -p "$SSH_DIR"
+	chmod 700 "$SSH_DIR"
+	ssh-keygen -b 4096 -t rsa -f "$SSH_DIR/id_rsa" -N "" -C "$USER@$HOSTNAME"
+	tee "$SSH_DIR/id_rsa.pub" "$SSH_DIR/authorized_keys"
+fi
+
 
 # update git repository
 if ! [[ -d "$DOTFILES_DIR" ]]; then
