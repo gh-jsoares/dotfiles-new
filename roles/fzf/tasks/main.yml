@@ -1,0 +1,8 @@
+---
+- name: Install
+  ansible.builtin.package:
+    name:
+      - fzf
+    state: latest
+  become: yes
+  become_user: root
