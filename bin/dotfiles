@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+
+# exit immediately if a command exists with a non-zero code (errors or fails)
+set -e
+
+# some constants
+DOTFILES_DIR="$HOME/.dotfiles"
+
+# update git repository
+if ! [[ -d "$DOTFILES_DIR" ]]; then
+	git clone "https://github.com/gh-jsoares/dotfiles-new.git"
+else
+	git -C "$DOTFILES_DIR" pull
+fi
+
+
+# install ansible if not installed
+if ! [ -x "$(command -v ansible)" ]; then
+	sudo apt install -y ansible
+fi
+
+# install requirements for ansible if needed
+if [[ -f "$DOTFILES_DIR/requirements.yml" ]]; then
+	cd "$DOTFILES_DIR"
+	ansible-galaxy install -r requirements.yml
+fi
+
+# run the ansible playbook and all its roles
+cd "$DOTFILES_DIR"
+ansible-playbook --diff "$DOTFILES_DIR/main.yml"
