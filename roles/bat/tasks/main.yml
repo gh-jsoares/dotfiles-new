@@ -1,7 +1,59 @@
 ---
-- name: Install
-  ansible.builtin.package:
-    name:
-      - bat
-    state: latest
+# use correct rust compiler
+- name: Set Rust compiler
+  shell: |
+    rustup override set stable
+    rustup update stable
+
+- name: Clone
+  ansible.builtin.git:
+    clone: yes
+    depth: 1
+    dest: "{{ ansible_user_dir }}/Development/repository/github.com/sharkdp/bat"
+    force: yes
+    repo: https://github.com/sharkdp/bat.git
+    # single_branch: yes
+    update: yes
+    version: "{{ bat_version | default('v0.22.1') }}"
+  register: clone
+
+- name: Build
+  shell:
+    chdir: "{{ ansible_user_dir }}/Development/repository/github.com/sharkdp/bat"
+    cmd: |
+      cargo build --release
+  when: clone.changed
+
+- name: Copy binary file
+  ansible.builtin.copy:
+    mode: 0755
+    dest: "/usr/local/bin/bat"
+    src: "{{ ansible_user_dir }}/Development/repository/github.com/sharkdp/bat/target/release/bat"
   become: yes
+  become_user: root
+
+- name: Install manual pages
+  shell:
+    chdir: "{{ ansible_user_dir }}/Development/repository/github.com/sharkdp/bat/target/release/build"
+    cmd: |
+      mkdir -p /usr/local/share/man/man1
+      gzip -c bat-45*/out/assets/manual/bat.1 | sudo tee /usr/local/share/man/man1/bat.1.gz > /dev/null
+  become: yes
+  become_user: root
+  when: clone.changed
+    
+- name: Remove build directory
+  ansible.builtin.file:
+    path: "{{ ansible_user_dir }}/Development/repository/github.com/sharkdp/bat/target"
+    state: absent
+  become: yes
+- name: Config folder
+  ansible.builtin.file:
+    mode: 0755
+    path: "{{ ansible_user_dir }}/.config/bat"
+    state: directory
+
+- name: Copy config file
+  ansible.builtin.copy:
+    dest: "{{ ansible_user_dir }}/.config/bat/config"
+    src: "config"
