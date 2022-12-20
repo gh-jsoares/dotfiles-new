@@ -1,0 +1,62 @@
+---
+
+- name: Install
+  ansible.builtin.package:
+    name:
+      - git
+    state: latest
+  become: yes
+
+- name: Set init.defaultBranch
+  community.general.git_config:
+    name: init.defaultBranch
+    scope: global
+    value: main
+
+- name: Set user.email
+  community.general.git_config:
+    name: user.email
+    scope: global
+    value: "{{ git_user_email }}"
+
+- name: Set user.name
+  community.general.git_config:
+    name: user.name
+    scope: global
+    value: "{{ git_user_name }}"
+
+- name: Set user.signingKey
+  community.general.git_config:
+    name: user.signingKey
+    scope: global
+    value: "{{ git_user_signingKey }}"
+
+- name: Set auto.autocrlf
+  community.general.git_config:
+    name: auto.autocrlf
+    scope: global
+    value: true
+
+- name: Set commit.gpgSign
+  community.general.git_config:
+    name: commit.gpgSign
+    scope: global
+    value: true
+
+- name: Set push.gpgSign
+  community.general.git_config:
+    name: push.gpgSign
+    scope: global
+    value: true
+
+- name: Set tag.gpgSign
+  community.general.git_config:
+    name: tag.gpgSign
+    scope: global
+    value: true
+
+- name: Set gpg.program
+  community.general.git_config:
+    name: gpg.program
+    scope: global
+    value: gpg

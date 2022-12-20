@@ -6,13 +6,27 @@ set -e
 # some constants
 DOTFILES_DIR="$HOME/.dotfiles"
 SSH_DIR="$HOME/.ssh"
+GPG_DIR="$HOME/.gnupg"
 
 # generate ssh keys
 if ! [[ -f "$SSH_DIR/authorized_keys" ]]; then
 	mkdir -p "$SSH_DIR"
 	chmod 700 "$SSH_DIR"
 	ssh-keygen -b 4096 -t rsa -f "$SSH_DIR/id_rsa" -N "" -C "$USER@$HOSTNAME"
-	cat "$SSH_DIR/id_rsa.pub" | tee "$SSH_DIR/authorized_keys"
+  cat "$SSH_DIR/id_rsa.pub" > "$SSH_DIR/authorized_keys"
+fi
+if ! [[ -f "$DOTFILES_DIR/ssh.pub" ]]; then
+  cat "$SSH_DIR/id_rsa.pub" | tee ssh.pub
+fi
+
+# generate gpg keys
+if ! [[ -d "$GPG_DIR/openpgp-revocs.d" ]]; then
+	mkdir -p "$GPG_DIR"
+  gpg --full-generate-key
+fi
+if ! [[ -f "$DOTFILES_DIR/gpg.pub" ]]; then
+  GPG_KEY_ID="$(gpg --list-secret-keys --keyid-format=long | head -n 3 | tail -n 1 | awk '{print $2}' | cut -d'/' -f2)"
+  gpg --armor --export $GPG_KEY_ID | tee gpg.pub
 fi
 
 
@@ -37,9 +51,7 @@ fi
 
 # run the ansible playbook and all its roles
 if [[ -f "$DOTFILES_DIR/vault.password" ]]; then
-	ansible-playbook --diff --extra-vars "@$DOTFILES_DIR/values.yml" --vault-password-file "$DOTFILES_DIR/vault.password" "$DOTFILES_DIR/main.yml" -e "ansible_python_interpreter=/usr/bin/python3" "$@"
-	#ansible-playbook --diff --extra-vars "@$DOTFILES_DIR/values.yml" --vault-password-file "$DOTFILES_DIR/vault.password" "$DOTFILES_DIR/main.yml" --become --ask-become-pass -e "ansible_python_interpreter=/usr/bin/python3" "$@"
+	ansible-playbook --ask-become-pass --diff --extra-vars "@$DOTFILES_DIR/values.yml" --vault-password-file "$DOTFILES_DIR/vault.password" "$DOTFILES_DIR/main.yml" -e "git_user_signingKey=$GPG_KEY_ID" -e "ansible_python_interpreter=/usr/bin/python3" "$@"
 else
-	#ansible-playbook --diff --extra-vars "@$DOTFILES_DIR/values.yml" "$DOTFILES_DIR/main.yml" --become --ask-become-pass -e "ansible_python_interpreter=/usr/bin/python3" "$@"
-	ansible-playbook --diff --extra-vars "@$DOTFILES_DIR/values.yml" "$DOTFILES_DIR/main.yml" -e "ansible_python_interpreter=/usr/bin/python3" "$@"
+	ansible-playbook --ask-become-pass --diff --extra-vars "@$DOTFILES_DIR/values.yml" "$DOTFILES_DIR/main.yml" -e "git_user_signingKey=$GPG_KEY_ID" -e "ansible_python_interpreter=/usr/bin/python3" "$@"
 fi
