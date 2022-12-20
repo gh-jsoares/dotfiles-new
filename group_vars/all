@@ -1,6 +1,5 @@
 default_roles:
   - system
-  - rust
   - awesome
   - alacritty
   - bat
@@ -12,6 +11,7 @@ default_roles:
   - nvm
   - oh-my-zsh
   - ripgrep
+  - rust
   - ssh
   - tmux
   - zsh
