@@ -1,0 +1,39 @@
+---
+# use correct rust compiler
+- name: Set Rust compiler
+  shell: |
+    rustup override set stable
+    rustup update stable
+
+- name: Clone
+  ansible.builtin.git:
+    clone: yes
+    depth: 1
+    dest: "{{ ansible_user_dir }}/Development/repository/github.com/ogham/exa"
+    force: yes
+    repo: https://github.com/ogham/exa.git
+    # single_branch: yes
+    update: yes
+    version: "{{ exa_version | default('v0.10.1') }}"
+  register: clone
+
+- name: Build
+  shell:
+    chdir: "{{ ansible_user_dir }}/Development/repository/github.com/ogham/exa"
+    cmd: |
+      cargo build --release
+  when: clone.changed
+
+- name: Copy binary file
+  ansible.builtin.copy:
+    mode: 0755
+    dest: "/usr/local/bin/exa"
+    src: "{{ ansible_user_dir }}/Development/repository/github.com/ogham/exa/target/release/exa"
+  become: yes
+  become_user: root
+
+- name: Remove build directory
+  ansible.builtin.file:
+    path: "{{ ansible_user_dir }}/Development/repository/github.com/ogham/exa/target"
+    state: absent
+  become: yes
