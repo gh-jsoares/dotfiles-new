@@ -4,7 +4,7 @@
   tasks:
     - name: Set roles
       set_fact:
-        roles: "{{ ansible_run_tags != ['all'] and ansible_run_tags or default_roles | difference(exclude_rolws | default([])) }}"
+        roles: "{{ ansible_run_tags != ['all'] and ansible_run_tags or default_roles | difference(exclude_roles | default([])) }}"
       tags:
         - always
 

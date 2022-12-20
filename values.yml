@@ -2,7 +2,7 @@
 git_user_email: jsoares.public@gmail.com
 git_user_name: João Soares
 exclude_roles:
-  - slack
+  - awesome
 neovim_version: master
 ssh_key: !vault |
   $ANSIBLE_VAULT;1.1;AES256
