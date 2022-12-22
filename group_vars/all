@@ -10,7 +10,6 @@ default_roles:
   - neovim
   - nerdfonts
   - nvm
-  - oh-my-zsh
   - ripgrep
   - rust
   - ssh
